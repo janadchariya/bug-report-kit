@@ -3,7 +3,7 @@
  * Supabase Storage bucket (selected via STORAGE_PROVIDER + SUPABASE_*
  * envs) under the prefix `bug-reports/{companyId}/{bugId}/`. We force the
  * filename `screenshot.png` so the path is deterministic and contains zero
- * user input — sidesteps the Thai-character pitfall (see obs 2433–2435).
+ * user input — sidesteps non-ASCII (e.g. Thai) filename pitfalls in storage keys.
  */
 import { getObjectStorage } from "@/lib/storage/object-storage";
 
