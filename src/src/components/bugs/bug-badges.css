@@ -1,0 +1,10 @@
+.bugs-badge { display:inline-flex; border-radius:var(--radius-pill); padding:2px 8px; font-size:var(--text-xs); line-height:1.4; font-weight:var(--weight-medium); white-space:nowrap; }
+.bugs-badge--blue { background:var(--tag-blue-bg); color:var(--tag-blue-fg); }
+.bugs-badge--amber { background:var(--warning-surface); color:var(--warning-ink); }
+.bugs-badge--green { background:var(--tag-green-bg); color:var(--tag-green-fg); }
+.bugs-badge--grey { background:var(--tag-grey-bg); color:var(--tag-grey-fg); }
+.bugs-badge--yellow { background:var(--tag-yellow-bg); color:var(--tag-yellow-fg); }
+.bugs-badge--orange { background:var(--tag-orange-bg); color:var(--tag-orange-fg); }
+.bugs-badge--red { background:var(--tag-red-bg); color:var(--tag-red-fg); }
+.bugs-badge--ring { box-shadow:inset 0 0 0 1px var(--warning-outline); }
+.bugs-priority-empty { font-size:var(--text-xs); color:var(--ink-muted); }

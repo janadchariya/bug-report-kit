@@ -1,0 +1,16 @@
+{
+  "tables": {
+    "public.chat_messages": {
+      "checkConstraints": {
+        "chat_messages_kind_known": {
+          "name": "chat_messages_kind_known",
+          "value": "\"chat_messages\".\"kind\" in ('new_lead', 'claimed_notice', 'owner_lead', 'claim_reminder', 'contact_reminder', 'md_no_claim', 'md_missed_deadline', 'md_grade_a', 'duplicate_attached', 'assigned_direct', 'digest_0845', 'digest_1330', 'digest_1630', 'md_digest_1730', 'renewal_talk_due', 'renewal_quote_due', 'renewal_risk', 'dispute_opened', 'space_bind')"
+        },
+        "chat_messages_subject_type_known": {
+          "name": "chat_messages_subject_type_known",
+          "value": "\"chat_messages\".\"subject_type\" in ('lead', 'claim_offer', 'follow_up', 'renewal_task', 'deadline_item', 'dispute', 'chat_space', 'digest')"
+        }
+      }
+    }
+  }
+}

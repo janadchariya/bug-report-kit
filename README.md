@@ -1,188 +1,99 @@
-# Bug Report Feature Kit
+# Bug Report Kit · v2
 
-A complete, portable in-app bug-reporting feature extracted from a production
-Next.js (App Router) + Prisma + TypeScript expense system. This folder is
-designed to be handed to an AI coding agent (Claude, Cursor, Codex, etc.)
-together with the instruction: **"Install this feature into my project,
-following this README."**
+A portable in-app bug reporting feature: source code for an AI agent to copy into a host project. This version ports the Sales R19.1 implementation and its Almond interaction design. The host supplies its colours through CSS tokens.
 
-The code is NOT an npm package. It is real application source, organized by
-layer, meant to be copied into the target project and adapted at a small,
-well-documented set of integration points (see `INTEGRATION.md`).
+**Install instruction:** “Install this feature into my project. Read README.md, INTEGRATION.md, DECISIONS.md and TOKENS.md first. Preserve the shipped behaviour and adapt the documented host seams.”
 
-## What the feature does
+This is a feature kit, not a running application or npm package. There is deliberately no root `package.json`. Do not run a standalone build here. Work in the target app or a disposable host with the dependencies and adapters below.
 
-1. **Floating report button** (`BugFeedbackWidget`) rendered on every
-   authenticated page. Clicking opens a modal.
-2. **Screenshot attach + annotation**: user pastes (Ctrl/Cmd+V), drops, or
-   picks an image (PNG/JPEG/WebP/GIF, ≤15 MB). A canvas-based annotation
-   editor lets them draw rectangles/arrows in 3 colors. No screen-capture
-   library is used — the user supplies the image.
-3. **Submit**: client requests a signed upload URL, PUTs the annotated PNG
-   directly to object storage (bypasses serverless body limits), then POSTs
-   metadata to `POST /api/bugs`. Client context (page URL, viewport, OS,
-   browser, device type, build SHA) is collected automatically.
-4. **Notify**: a Google Chat card is sent to a webhook (optional, env-gated)
-   linking to the admin triage page.
-5. **Admin triage board** (`/admin/bugs`): split view list + detail, status
-   workflow NEW → IN_PROGRESS → DONE/CANCELLED with status-change history,
-   priority (LOW/MEDIUM/HIGH/CRITICAL), assignee, screenshot viewer with
-   zoom/pan, threaded comments with optional image attachments.
-6. **Reporter view** (`/my-bugs`): each user sees their own reports, can
-   reply in the comment thread, and gets an unread-reply badge in the nav.
-   Opening a bug fires `POST /api/bugs/[id]/reporter-read` to clear it.
-7. **Rate limiting**: in-memory per-user limiter on bug creation (good
-   enough for single-instance serverless; swap for Redis at scale).
+## Feature tour
 
-## Folder map
+- **Report from every signed-in page.** A round bug FAB opens the dialog. Its one-time coachmark explains capture → click → paste and links to `/guide#report-a-bug`. It is a named region, does not steal focus, and closes only through an explicit action. The shared floating action layer avoids phone tabs, keyboards, fixed action bars and toasts; modal dialogs hide it.
+- **Summary first.** Enter Summary (required, 200 characters maximum); `+ Add details` expands the optional 4,000-character description. The R19.1 report dialog requires a screenshot as well as Summary; the lower-level server command still accepts metadata-only reports for compatibility. Drafts stay in mounted component memory after a failed or uncertain submission; closing a dirty draft asks before discarding it.
+- **Bring your own screenshot.** Paste anywhere in the report dialog, including Summary, drop a file, or pick PNG, JPEG, WebP or GIF (rasterised to a still frame). The app never captures the screen automatically. Annotate inline with rectangle, ellipse, arrow or freehand pen, three colours, undo, start over, native scrolling and zoom. Send flattens the report annotations. Comment images are prepared and attached directly; they do not open an annotation editor.
+- **Optional PDF.** One PDF, up to **4 MiB (4,194,304 bytes)**, may accompany a report or comment. PDF upload happens separately from report creation. If it fails, the saved report remains and the UI offers a retry without creating another report. Removal leaves an audit placeholder.
+- **Safe context.** The report captures an allowlisted path/query, viewport, browser, OS and device. The server supplies reporter identity and build SHA. Search text, hashes, credentials and storage dumps are excluded.
+- **Triage workspace.** `/bugs` has status pills, priority and assignee filters, debounced search, list selection retained in the URL, detail, status history and a discussion thread. Reply with text, image or PDF. Assign only to active triagers. Cancellation requires a reason; terminal reports can be reopened.
+- **Reporter view.** `/bugs/mine` (“My bug reports”) shows only the reporter’s own reports, with unread dots. Opening a rendered detail clears only the activity actually shown. Replies arriving later remain unread. Navigation badges share one visibility-aware 45-second poller and refresh after successful actions.
+- **Help.** The guide has three HTML/CSS illustrated steps, capture shortcuts and follow-up instructions. No real customer screenshot is bundled.
+- **Optional Google Chat cards.** Report/comment events enqueue notifications inside the saving transaction; the delivery worker is scheduled after commit. Without configured recipient credentials no Chat delivery is attempted; host delivery can use Chat, another channel, or no delivery.
+
+The exact product rules and review dispositions live in [DECISIONS.md](DECISIONS.md). Operator guidance is in [docs/runbooks/bug-reports.md](docs/runbooks/bug-reports.md). Some guide illustrations retain the source’s historical copy; see the copy inventory in [INTEGRATION.md](INTEGRATION.md) before localising.
+
+## Stack and layout
+
+The source assumes **Next.js 16 App Router, React 19, TypeScript, Drizzle ORM + PostgreSQL, and server actions**. Attachment bytes live in PostgreSQL `bytea`; there is no object storage or signed upload flow. RLS is enabled and SQL triggers prohibit hard deletion. The trusted server database role must have the intended access; no browser database access is needed.
 
 ```
-bug-report-kit/
-├── README.md            ← you are here (install guide below)
-├── INTEGRATION.md       ← the 8 seams: interfaces the code expects
-├── prisma/
-│   └── bug-report.prisma   3 models + 2 enums to merge into schema.prisma
-├── src/                 ← the feature itself (copy + adapt)
-│   ├── lib/bugs/           server logic: create/list/get/update, comments,
-│   │                       storage paths, chat notify, rate limit, mappers,
-│   │                       user-agent parsing, sidebar badge counts
-│   ├── app/api/bugs/       9 route handlers (REST-ish JSON API)
-│   ├── app/pages/          help/bug (report form page), my-bugs (+[id]),
-│   │                       admin/bugs (+[id])  — Next.js App Router pages
-│   └── components/
-│       ├── bug-feedback/   floating widget, annotation modal/canvas/toolbar,
-│       │                   coachmark, client upload + context helpers
-│       ├── admin/bugs/     triage board: split view, detail panel, comment
-│       │                   thread, badges, status history, screenshot viewer
-│       └── bugs/           reporter-read-effect (clears unread badge)
-├── reference/           ← REAL implementations of every external dependency,
-│   │                       copied from the source project. Use as-is, or as
-│   │                       the spec for adapting to the target's equivalents.
-│   ├── auth/current-user.ts        session → User (see INTEGRATION.md §1)
-│   ├── db/prisma.ts                Prisma singleton
-│   ├── api/response.ts             ok()/fail() JSON helpers
-│   ├── storage/object-storage.ts   storage abstraction (local + Supabase)
-│   ├── storage/supabase-storage.ts Supabase Storage adapter (signed uploads)
-│   ├── notifications/              Google Chat webhook card sender + prefs
-│   ├── hooks/use-drag-to-pan.ts    zoom/pan hook for screenshot viewer
-│   ├── icons/icons.tsx             the 3 inline SVG icons the kit uses
-│   └── types/store-types.ts        source project's shared types (User, UserRole)
-├── tests/               ← 8 vitest suites (hit a real dev DB; see below)
-└── examples/
-    ├── layout-mount.tsx     how the widget mounts in the root layout
-    └── sidebar-badge.tsx    nav entries + unread badge wiring
+README.md / INTEGRATION.md / DECISIONS.md / TOKENS.md / CHANGELOG.md
+db/schema.ts                    bug tables and enums
+ db/migrations/0001_*.sql        reports, images, comments, history
+ db/migrations/0002_*.sql        Chat routing grants
+ db/migrations/0003_*.sql        PDF attachments
+src/app/(app)/bugs/             triage and reporter pages + tests
+src/app/(app)/guide/            bug guide only
+src/app/actions/bugs.ts         authenticated server actions
+src/app/api/bugs/               list and authorised binary routes + tests
+src/src/components/bugs/        UI, annotation, coachmark + tests
+src/src/domain/bugs.ts          status transitions + tests
+src/src/lib/bugs/               browser/pure helpers + tests
+src/src/server/bugs/            persistence, access, limits, notifications + tests
+reference/                     minimal host adapters, mirroring host paths
+ tests/                        extra DB, privacy, shell, e2e and fixtures
+ tokens/bug-tokens.css          Sales defaults; map to host colours
+ examples/                     shell mount, badges, guide and test wiring
 ```
 
-## Install guide (for the AI agent)
+The outer `src/` is a kit container. Copy **its contents** into the host root: `src/app` → host `app`, `src/src` → host `src`. Original `@/src/...` and `@/app/...` aliases then retain their Sales meaning. Copy `db/` to host `db/`; the reference schema adapter re-exports it.
 
-Work through these steps in order. After each step, typecheck before moving on.
+Tests stay **colocated as in Sales** wherever their production layer is copied. Tests for external shell/privacy/database seams live under `tests/` mirroring their Sales paths; e2e and fixtures keep `tests/e2e` and `tests/fixtures`. This preserves acceptance criteria without importing the rest of the original CRM. Host-specific test adaptations are enumerated in [CHANGELOG.md](CHANGELOG.md).
 
-### 0. Survey the target project first
+Dependencies used by the port: `next`, `react`, `react-dom`, `drizzle-orm`, `postgres`, `server-only`, `zod` and `lucide-react`. Use compatible host versions; the source uses Drizzle 0.45 and Zod 4. Test tooling: TypeScript, Vitest, jsdom, Testing Library, Vite’s React plugin and Playwright. Migration tooling is the host’s responsibility.
 
-Identify the target's equivalents of each seam in `INTEGRATION.md`:
-auth/session, Prisma client location, object storage, notification channel,
-API response conventions, path alias (`@/`), UI conventions. If the target is
-not Next.js App Router, the `src/app/` layer must be rewritten for the
-target's router — `src/lib/bugs/` and the React components still transfer.
+If the host uses another ORM or auth stack, replace the adapters and persistence queries together while preserving transaction boundaries, advisory locks, idempotency and ownership checks. Another router needs equivalent server actions/routes and client calls. Another UI library must preserve Dialog focus/keyboard behaviour and floating-layer geometry. Colour mapping alone must not alter the feature’s layout or interactions.
 
-### 1. Database schema
+## Limits and security
 
-Merge `prisma/bug-report.prisma` into the target's `schema.prisma`.
-- The models reference `User` and `Company`. Add the back-relations to those
-  models: on `User` → `bugReports BugReport[] @relation("BugReports")`,
-  `assignedBugs BugReport[] @relation("AssignedBugs")`,
-  `bugComments BugReportComment[] @relation("BugComments")`,
-  `bugStatusChanges BugReportStatusChange[] @relation("BugStatusChanges")`;
-  on `Company` → `bugReports BugReport[]`.
-- **If the target has no Company/multi-tenant concept**: delete `companyId`
-  + the `Company` relation from `BugReport`, drop the `companyId` argument
-  everywhere it flows (create-bug, storage prefix, list filters). It exists
-  only for tenant scoping and the storage path.
-- Run the target's migration workflow (`prisma migrate dev` or `db push`).
+- The serverless platform’s **4.5 MB request body ceiling** leaves room for multipart framing around a **4 MiB PDF**. Next’s server action parser must also allow the upload (`bodySizeLimit: "5mb"` in the example); raising that parser setting does not raise the platform ceiling. Images and PDFs use separate requests.
+- Images accept a source up to **15 MiB**, are resized in the browser to a longest side of **1920 px**, and encoded as WebP with a PNG fallback at **2 MiB maximum**. The server checks actual raster type, dimensions and byte count again. GIF input becomes a still raster; SVG/HEIC are rejected and animation is never uploaded.
+- Limits are **5 reports** and **30 comments per user per rolling 10 minutes**, enforced in the database. Images and PDFs share **50 MiB per user per rolling 24 hours**, protected by a per-user advisory lock across processes. Removed attachments still count; idempotent retries do not consume another allocation.
+- Every detail and binary read checks a current reporter-or-triager capability before reading attachment bytes. Reporters cannot read another user’s report by guessing an ID. UI visibility is not an authorisation boundary.
+- PDF downloads are `Content-Disposition: attachment`, `Cache-Control: private, no-store`, `X-Content-Type-Options: nosniff`, with CSP `sandbox`. Image reads are authenticated private raster responses with no-store/nosniff. Do not put either behind a public CDN or image optimiser.
+- PDF screening is **best effort**. It checks `%PDF-`, length and prohibited PDF names `/JavaScript`, `/JS`, `/Launch`, `/EmbeddedFile`, `/XFA`, `/RichMedia`, including `#xx`-escaped names and name delimiters. It skips opaque stream bytes and **does not decompress or scan `/ObjStm`**. It is not malware detection or a complete PDF parser.
+- Removal nulls live bytes and retains metadata, actor, reason and time. It does not erase backups. Screenshot pixels, free text and PDFs require manual privacy review; a contact scrub counter does not establish that those surfaces contain no personal data.
 
-### 2. Server logic — `src/lib/bugs/` → target `lib/bugs/`
+## Install in order
 
-Copy the folder. Fix imports per INTEGRATION.md: `@/lib/db/prisma`,
-`@/lib/storage/object-storage`, `@/lib/notifications/*`, `@/lib/store/types`
-(only `UserRole` and `NotifPrefs` types are used). `mappers.ts` imports
-generated Prisma enum types — adjust to the target's Prisma client output
-path. `notify-chat.ts` is optional; if the target has no Google Chat, stub
-the two exported functions to no-ops (or wire Slack/Discord/email instead)
-— nothing else depends on delivery.
+Use a dedicated host branch and a disposable test database. Never point destructive test fixtures at production.
 
-### 3. API routes — `src/app/api/bugs/` → target `app/api/bugs/`
+1. **Survey the host.** Locate authentication/session resolution, effective permission grants, PostgreSQL/ORM, errors/action envelopes, UI primitives, nav polling, floating geometry, time formatting, event/outbox processing and privacy inventory. Compare every module in [INTEGRATION.md](INTEGRATION.md). Preserve the host’s existing conventions at those seams. **Check:** record a mapping for every seam and run the host’s existing typecheck/unit baseline.
+2. **Install schema prerequisites.** Map the reference `users`, role grants, events/jobs and optional Chat schema onto host tables. Then merge `db/schema.ts` and apply `0001_bug_reports.sql`, `0002_bug_chat.sql`, `0003_bug_pdf.sql` through the host migration runner in that order. Reference bootstrap SQL is only for a new disposable host, never a replacement for existing tables. **Check:** typecheck schema; run the copied migration invariant tests, then DB tests against a disposable database. Confirm RLS, foreign keys, uniqueness and forbid-delete triggers.
+3. **Wire adapters.** Copy only the reference adapters the host needs, preserving their relative paths, or implement their documented interfaces. Bind the auth session to the host’s verified session and effective grants. Map `bugs.report` to reporters and `bugs.triage` to trusted triagers. Add the privacy registry entries. Notifications can remain disabled. **Check:** typecheck adapters and run access, context, permissions and nav-count tests. An unauthenticated actor must fail closed.
+4. **Copy the feature.** Overlay `src/` contents into the host root. Keep import aliases pointing to that root. Preserve `db/` location or update its reference re-export. Add the server-action parser setting and Node runtime support. **Check:** host typecheck, pure/domain tests, route/action tests and all bug server tests with a real disposable database; verify same-key retries and shared image/PDF quota races.
+5. **Map tokens and UI.** Import `tokens/bug-tokens.css` after the host’s base tokens; override documented colour aliases for the host palette. Bring over UI and shell CSS required by the reference primitives. Do not flatten the widget/annotation/workspace layout into a new design. **Check:** component tests for annotation, dialogs, form, filters, workspace, thread, PDF and coachmark, plus a host typecheck.
+6. **Mount once.** Follow [examples/layout-mount.tsx](examples/layout-mount.tsx). Mount one `NavBadges`, the widget (which owns the coachmark and `FloatingActionLayer`) and one `Toaster`. Merge the badge endpoint into an existing host poller instead of adding another. Add permission-scoped navigation and `/guide#report-a-bug` via the other examples. **Check:** shell/geometry tests, guide anchor, mobile More placement and host typecheck.
+7. **Verify notifications and privacy.** Optionally connect durable Google Chat delivery and job scheduling; test failures, deduplication and plain safe links. Keep secrets in the host’s secret manager. **Check:** notification tests, privacy tests and manual attachment removal; no hidden dependence on CRM/lead access.
+8. **Accept the result.** Adapt synthetic e2e actors to the host’s login fixture and run the copied Playwright scenario against the host. **Check:** host typecheck → portable unit/component tests → DB/server tests → e2e. Finish the visual and behaviour checklist below. A pass in this source kit is not a deployment or production verification.
 
-Copy as-is. These depend on `getCurrentUser()` (throws when unauthenticated)
-and the `ok()/fail()` response helpers. Authorization rules encoded in the
-routes — preserve them:
-- create/list-own/read-own/comment: any authenticated user
-- list-all, status/priority/assignee updates, comment on any bug: ADMIN
-  (adapt the role check to the target's role model)
-- reporters may only see and comment on their own bugs
-- screenshot/image binary routes proxy from object storage with the same
-  owner-or-admin check — never serve storage URLs directly to the client.
+Use the host’s commands (commonly `npm run typecheck`, `vitest run`, and `playwright test tests/e2e/bugs.spec.ts`); [examples/vitest.config.ts](examples/vitest.config.ts) shows the unit/server split and alias. Do not run integration tests until a disposable database has been provisioned and migrated. If Node 22 exposes an experimental storage global that conflicts with jsdom, run Vitest with `NODE_OPTIONS=--no-experimental-webstorage`. Preserve the synthetic fixture data; never copy source production users.
 
-### 4. Components + pages
+## Acceptance checklist
 
-Copy `src/components/*` into the target's components tree and
-`src/app/pages/*` into the target's route structure (the kit's `pages/`
-subfolder names are suggestions — `help/bug` is a standalone report form
-page and is optional if the floating widget is enough). Adapt:
-- `@/components/icons` → 3 SVG icons in `reference/icons/icons.tsx`
-- `@/lib/hooks/use-drag-to-pan` → `reference/hooks/use-drag-to-pan.ts`
-- Styling: the source uses Tailwind CSS v4 utility classes with custom
-  design tokens (e.g. `bg-cream`, `text-ink`, `border-line`, `text-mist`).
-  Map these to the target's palette — grep for them and substitute.
-  Thai UI strings appear throughout; translate if the target isn't Thai.
+Compare the installed UI against the copied component layouts, illustrated guide and the approved host screenshots at desktop, tablet and phone widths. There are no private production screenshots in this public kit.
 
-### 5. Mount the widget + nav
+- [ ] First visit shows the three-step coachmark beside the round FAB; scrolling/focus are unaffected. Got it, Learn more and opening the form persist dismissal. Escape/outside clicks do not silently consume it.
+- [ ] FAB clears phone tabs, stacked bars, toasts, keyboard and final page controls; all modals hide it and closing restores it.
+- [ ] Summary plus screenshot enables Send, while Summary alone stays disabled; details expand; paste from a focused Summary works. Paste/drop/picker show the same preview and error states. Screenshot capture shortcuts match the OS.
+- [ ] Rect/ellipse/arrow/freehand, colours, undo, start over, zoom and scrolling match the source; Send flattens the report while failures preserve its editable draft. Comment image attachments use direct preparation and preview. No upload occurs before submission.
+- [ ] PDF boundary is exactly 4 MiB; report/comment and PDF failure/retry are independent. Filenames are safe, downloads are attachments, and all binary routes reject an unrelated reporter before fetching bytes.
+- [ ] Workspace status pills, priority, assignee and debounced search retain filters and selection in the URL; keyboard Back/Forward and phone list/detail match desktop semantics.
+- [ ] New → In progress/Cancelled; In progress → Done/Cancelled; Done/Cancelled → In progress. Cancellation requires a reason; no-op status creates no history. Only active triagers can be assigned.
+- [ ] Text/image/PDF discussion, older-history loading and attachment removal placeholders match. A PDF can never silently disappear from a reply without an error/retry state.
+- [ ] Reporter sees only their reports; new triager replies/status activity adds unread dots including terminal reports. Read marks the rendered snapshot only; badges update through a single poller.
+- [ ] Guide has three illustrated steps and its anchor works from coachmark and navigation. Host-specific urgent-payment/MD copy has been reviewed.
+- [ ] Anonymous access fails; revoked permissions take effect on server requests; database limits, advisory-lock quota, duplicate requests and forbid-delete triggers pass server tests.
+- [ ] Optional Chat cards contain safe metadata/links, deduplicate and do not prevent in-app use when disabled.
 
-- Mount `<BugFeedbackWidget />` for authenticated users in the root layout
-  (`examples/layout-mount.tsx`).
-- Add nav links `/my-bugs` (all users) and `/admin/bugs` (admin) with badge
-  counts (`examples/sidebar-badge.tsx`, counts in `src/lib/bugs/badge-counts.ts`).
+## History
 
-### 6. Environment variables
-
-| Variable | Required | Purpose |
-|---|---|---|
-| `STORAGE_PROVIDER` | yes (`local` \| `supabase`) | picks storage adapter |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET` | if supabase | Supabase Storage (signed uploads need Supabase or another adapter implementing `createSignedUploadUrl`) |
-| `LOCAL_STORAGE_DIR` | no | local adapter root dir (default `.data`) |
-| `GOOGLE_CHAT_BUG_WEBHOOK_URL` | no | new-bug/new-comment chat cards; feature silently skips if unset |
-| `NEXTAUTH_URL` | recommended | absolute links in chat cards |
-| `NEXT_PUBLIC_BUILD_SHA`, `NEXT_PUBLIC_GH_REPO_URL` | no | build SHA stamped on reports + commit link in admin UI |
-
-Note: the local filesystem adapter does NOT implement signed uploads. The
-upload-url routes 501 without it — either use the Supabase adapter, add
-`createSignedUploadUrl` to the target's storage, or rewrite the client
-upload (`components/bug-feedback/lib/upload.ts`) to multipart-POST the file
-through the API route instead.
-
-### 7. Verify
-
-- Copy `tests/` into the target's test tree. They are integration tests that
-  hit a real database via Prisma (the source project points `DATABASE_URL`
-  at a dev database) and clean up after themselves with `[test-...]`-prefixed
-  rows. Adapt imports, then run them — they are the acceptance criteria.
-- Manual smoke: log in → click floating bug button → paste a screenshot →
-  annotate → submit → see it in `/my-bugs` → as admin, triage in
-  `/admin/bugs`, change status, comment → reporter sees unread badge →
-  opening the bug clears it.
-
-## npm dependencies
-
-Beyond the framework itself (Next.js ≥14 App Router, React 18+, Prisma),
-the feature needs only:
-- `zod` (v4 syntax) — API input validation
-- `@supabase/supabase-js` — only if using the Supabase storage adapter
-
-Everything else (annotation canvas, UA parsing, rate limiter, upload) is
-dependency-free hand-rolled code included in this kit.
-
-## Origin
-
-Extracted 2026-07-03 from a production Thai-language internal expense
-system (Next.js 15 App Router, Prisma + Supabase Postgres, NextAuth v5,
-Tailwind v4, deployed on Vercel). Role model there: EMPLOYEE / APPROVER /
-ACCOUNTING / HR / ADMIN — only ADMIN gates transfer to this feature.
+v1.0.0 was the original Almond extraction at commit `3e39878` (the retired ORM/REST/object-storage design). v2.0.0 replaces it with the Sales R19.1 source and documents all port deviations in [CHANGELOG.md](CHANGELOG.md). Only one feature implementation is shipped.
