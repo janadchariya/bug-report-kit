@@ -44,7 +44,7 @@ reference/                     minimal host adapters, mirroring host paths
  examples/                     shell mount, badges, guide and test wiring
 ```
 
-The outer `src/` is a kit container. Copy **its contents** into the host root: `src/app` → host `app`, `src/src` → host `src`. Original `@/src/...` and `@/app/...` aliases then retain their Sales meaning. Copy `db/` to host `db/`; the reference schema adapter re-exports it.
+The outer `src/` is a kit container. Copy **its contents** into the host root: `src/app` → host `app`, `src/src` → host `src`. Original `@/src/...` and `@/app/...` aliases then retain their Sales meaning. Copy the **contents** of `db/` into host `db/` (the same folder that receives `reference/db/`, so `db/schema.ts` sits beside `db/0000_host_dependencies.sql`); the reference schema adapter re-exports `db/schema.ts`.
 
 Tests stay **colocated as in Sales** wherever their production layer is copied. Tests for external shell/privacy/database seams live under `tests/` mirroring their Sales paths; e2e and fixtures keep `tests/e2e` and `tests/fixtures`. This preserves acceptance criteria without importing the rest of the original CRM. Host-specific test adaptations are enumerated in [CHANGELOG.md](CHANGELOG.md).
 
@@ -70,12 +70,23 @@ Use a dedicated host branch and a disposable test database. Never point destruct
 2. **Install schema prerequisites.** Map the reference `users`, role grants, events/jobs and optional Chat schema onto host tables. Then merge `db/schema.ts` and apply `0001_bug_reports.sql`, `0002_bug_chat.sql`, `0003_bug_pdf.sql` through the host migration runner in that order. Reference bootstrap SQL is only for a new disposable host, never a replacement for existing tables. **Check:** typecheck schema; run the copied migration invariant tests, then DB tests against a disposable database. Confirm RLS, foreign keys, uniqueness and forbid-delete triggers.
 3. **Wire adapters.** Copy only the reference adapters the host needs, preserving their relative paths, or implement their documented interfaces. Bind the auth session to the host’s verified session and effective grants. Map `bugs.report` to reporters and `bugs.triage` to trusted triagers. Add the privacy registry entries. Notifications can remain disabled. **Check:** typecheck adapters and run access, context, permissions and nav-count tests. An unauthenticated actor must fail closed.
 4. **Copy the feature.** Overlay `src/` contents into the host root. Keep import aliases pointing to that root. Preserve `db/` location or update its reference re-export. Add the server-action parser setting and Node runtime support. **Check:** host typecheck, pure/domain tests, route/action tests and all bug server tests with a real disposable database; verify same-key retries and shared image/PDF quota races.
-5. **Map tokens and UI.** Import `tokens/bug-tokens.css` after the host’s base tokens; override documented colour aliases for the host palette. Bring over UI and shell CSS required by the reference primitives. Do not flatten the widget/annotation/workspace layout into a new design. **Check:** component tests for annotation, dialogs, form, filters, workspace, thread, PDF and coachmark, plus a host typecheck.
+5. **Map tokens and UI.** Keep the file at `tokens/bug-tokens.css` in the host root (component tests read it from there) and import it after the host’s base tokens; override documented colour aliases for the host palette. Bring over UI and shell CSS required by the reference primitives. Do not flatten the widget/annotation/workspace layout into a new design. **Check:** component tests for annotation, dialogs, form, filters, workspace, thread, PDF and coachmark, plus a host typecheck.
 6. **Mount once.** Follow [examples/layout-mount.tsx](examples/layout-mount.tsx). Mount one `NavBadges`, the widget (which owns the coachmark and `FloatingActionLayer`) and one `Toaster`. Merge the badge endpoint into an existing host poller instead of adding another. Add permission-scoped navigation and `/guide#report-a-bug` via the other examples. **Check:** shell/geometry tests, guide anchor, mobile More placement and host typecheck.
 7. **Verify notifications and privacy.** Optionally connect durable Google Chat delivery and job scheduling; test failures, deduplication and plain safe links. Keep secrets in the host’s secret manager. **Check:** notification tests, privacy tests and manual attachment removal; no hidden dependence on CRM/lead access.
 8. **Accept the result.** Adapt synthetic e2e actors to the host’s login fixture and run the copied Playwright scenario against the host. **Check:** host typecheck → portable unit/component tests → DB/server tests → e2e. Finish the visual and behaviour checklist below. A pass in this source kit is not a deployment or production verification.
 
 Use the host’s commands (commonly `npm run typecheck`, `vitest run`, and `playwright test tests/e2e/bugs.spec.ts`); [examples/vitest.config.ts](examples/vitest.config.ts) shows the unit/server split and alias. Do not run integration tests until a disposable database has been provisioned and migrated. If Node 22 exposes an experimental storage global that conflicts with jsdom, run Vitest with `NODE_OPTIONS=--no-experimental-webstorage`. Preserve the synthetic fixture data; never copy source production users.
+
+## Kit verification
+
+v2.0.0 was installed into a fresh host made only from `reference/`, `src/`, `db/`, `tests/`, `tokens/` and `examples/vitest.config.ts`, with no other application code:
+
+- `tsc --noEmit`: 0 errors.
+- `scripts/migrate-bugs.ts` on an empty local PostgreSQL 17 test database: all four SQL files applied.
+- `vitest --project unit`: 39 files, 460 tests passed.
+- `vitest --project server` against that database: 15 files, 124 tests passed.
+
+The Playwright suite was not run in that host, because it needs a host login, shell and onboarding screens (see INTEGRATION.md, "Tests and harness seams"). The same spec passed unchanged in the source application.
 
 ## Acceptance checklist
 

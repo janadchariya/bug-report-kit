@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-const tokens = readFileSync("app/tokens.css", "utf8");
+const tokens = readFileSync("tokens/bug-tokens.css", "utf8");
 const css = readFileSync("src/components/bugs/bug-widget.css", "utf8");
 const imageCss = readFileSync("src/components/bugs/bug-images.css", "utf8");
 

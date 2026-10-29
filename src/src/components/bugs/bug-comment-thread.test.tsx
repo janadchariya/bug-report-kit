@@ -322,7 +322,7 @@ it("keeps an own-message image tombstone transparent so its inherited white text
   const style = document.createElement("style");
   // JSDOM does not resolve custom properties; feed the real styles resolved
   // against the actual token values so an inherited on-ink/canvas clash fails.
-  const tokens = new Map([...readFileSync("app/tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
+  const tokens = new Map([...readFileSync("tokens/bug-tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
   style.textContent = (readFileSync("src/components/bugs/bug-images.css", "utf8") + readFileSync("src/components/bugs/bug-comment-thread.css", "utf8"))
     .replace(/var\((--[a-z0-9-]+)\)/g, (expression, name: string) => tokens.get(name) ?? expression);
   document.head.append(style);
@@ -412,7 +412,7 @@ it("explains another author's pending PDF without offering their upload controls
 
 it("keeps helper text legible inside the author's own bubble", () => {
   const style = document.createElement("style");
-  const tokens = new Map([...readFileSync("app/tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
+  const tokens = new Map([...readFileSync("tokens/bug-tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
   style.textContent = (".bugs-helper { color: #6b6b74; }" + readFileSync("src/components/bugs/bug-pdf.css", "utf8") + readFileSync("src/components/bugs/bug-comment-thread.css", "utf8"))
     .replace(/var\((--[a-z0-9-]+)\)/g, (expression, name: string) => tokens.get(name) ?? expression);
   document.head.append(style);
@@ -426,7 +426,7 @@ it("keeps helper text legible inside the author's own bubble", () => {
 
 it("gives a failed PDF alert in an own bubble a token-based surface with readable negative text", () => {
   const css = readFileSync("src/components/bugs/bug-pages.css", "utf8");
-  const tokens = new Map([...readFileSync("app/tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
+  const tokens = new Map([...readFileSync("tokens/bug-tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
   const style = document.createElement("style");
   style.textContent = (css + readFileSync("src/components/bugs/bug-pdf.css", "utf8") + readFileSync("src/components/bugs/bug-comment-thread.css", "utf8"))
     .replace(/var\((--[a-z0-9-]+)\)/g, (expression, name: string) => tokens.get(name) ?? expression);
@@ -472,7 +472,7 @@ it("explains uncertain delivery and preserves an identical retry payload with th
 });
 
 it("keeps the image and PDF remove dots compact inside transparent 44px phone targets", async () => {
-  const tokens = new Map([...readFileSync("app/tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
+  const tokens = new Map([...readFileSync("tokens/bug-tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
   const style = document.createElement("style");
   style.textContent = (readFileSync("src/components/bugs/bug-comment-thread.css", "utf8") + readFileSync("src/components/bugs/bug-pdf.css", "utf8"))
     .replace(/var\((--[a-z0-9-]+)\)/g, (expression, name: string) => tokens.get(name) ?? expression);

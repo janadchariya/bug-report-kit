@@ -119,6 +119,12 @@ Replaces source line(s) 269–271; kit line(s) 269–271:
   expect(screen.getByRole("img", { name: "Sam Example" })).toHaveTextContent("SE");
 ```
 
+Replaces source line(s) 325, 415, 429 and 475; kit line(s) 325, 415, 429 and 475 (each line reads the kit token file instead of the source host's `app/tokens.css`):
+
+```tsx
+  const tokens = new Map([...readFileSync("tokens/bug-tokens.css", "utf8").matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2]]));
+```
+
 
 #### `src/src/components/bugs/bug-detail.tsx`
 
@@ -156,6 +162,17 @@ Replaces source line(s) 79; kit line(s) 79–79:
 
 ```tsx
   expect(screen.getByLabelText("Summary")).toHaveValue(""); expect(stored.mock.calls.every(([key]) => key === "bug-report-kit.coachmarkSeen")).toBe(true); stored.mockRestore();
+```
+
+
+#### `src/src/components/bugs/bug-widget-layout.test.tsx`
+
+Source: `src/components/bugs/bug-widget-layout.test.tsx`.
+
+Replaces source line(s) 3; kit line(s) 3 (reads the kit token file instead of the source host's `app/tokens.css`):
+
+```tsx
+const tokens = readFileSync("tokens/bug-tokens.css", "utf8");
 ```
 
 
