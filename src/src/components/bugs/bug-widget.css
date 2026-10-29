@@ -1,0 +1,73 @@
+.shell-floating-action {
+  position: fixed;
+  right: 24px;
+  bottom: max(calc(24px + var(--shell-keyboard-inset, 0px)), var(--shell-action-lift, 0px));
+  z-index: 35;
+}
+.shell-floating-action[hidden] { display: none; }
+.bug-report-trigger {
+  display: grid;
+  place-items: center;
+  width: var(--fab-size);
+  height: var(--fab-size);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--on-accent);
+  background: var(--primary-grad);
+  box-shadow: var(--popover-shadow);
+  transition: transform 150ms, box-shadow 150ms;
+}
+.bug-report-trigger:hover { transform: scale(1.05); box-shadow: var(--toast-shadow); }
+.bug-report-trigger:active { transform: scale(0.95); }
+.bug-report-trigger[data-sent="true"], .bug-report-trigger[data-sent="true"]:hover { background: var(--positive); }
+.ui-dialog-backdrop:has(> .bug-report-dialog) { padding: 16px; }
+.bug-report-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(1024px, 100%);
+  max-height: calc(100dvh - 32px);
+  border-radius: var(--radius-card);
+}
+.bug-report-dialog .ui-dialog__header { flex-shrink: 0; align-items: center; border-bottom: 1px solid var(--divider); padding: 12px 16px; }
+.bug-report-dialog .ui-dialog__header h2 { margin: 0; }
+.bug-report-dialog .ui-dialog__body { display: flex; min-height: 0; padding: 0; }
+.bug-report-composer { display: flex; flex-direction: column; min-width: 0; width: 100%; }
+.bug-report-composer__columns { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 0; flex-shrink: 0; }
+.bug-report-image { position: relative; min-width: 0; min-height: var(--bug-dropzone-min-height); overflow: hidden; padding: 8px; background: var(--canvas); }
+.bug-report-dropzone { display: flex; height: 100%; min-height: var(--bug-dropzone-min-height); flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 16px; border: 2px dashed var(--divider-strong); border-radius: var(--radius-card); background: var(--surface); text-align: center; }
+.bug-report-dropzone[data-dragging="true"] { border-color: var(--accent-border); background: var(--accent-soft); }
+.bug-report-dropzone > svg { color: var(--divider-strong); }
+.bug-report-dropzone p { margin: 0; color: var(--ink-muted); font-size: var(--text-xs); }
+.bug-report-dropzone .bug-report-dropzone__title { margin-bottom: 4px; color: var(--ink-secondary); font-size: var(--text-body); font-weight: var(--weight-semibold); }
+.bug-report-image__change { position: absolute; z-index: 2; right: 12px; top: 12px; min-height: var(--control-sm); padding: 4px 8px; font-size: var(--text-xs); border-radius: var(--radius-control); background: var(--surface); box-shadow: var(--raised-shadow); }
+.bug-report-image__success { position: absolute; z-index: 2; top: 12px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 24px); padding: 4px 12px; border-radius: var(--radius-pill); background: var(--positive); color: var(--on-accent); box-shadow: var(--raised-shadow); font-size: var(--text-xs); text-align: center; pointer-events: none; }
+.bug-report-image__hint { margin: 8px; color: var(--ink-secondary); font-size: var(--text-xs); }
+.bug-report-form { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-top: 1px solid var(--divider); color: var(--ink-secondary); font-size: var(--text-body); }
+.bug-report-field { display: flex; flex-direction: column; gap: 4px; }
+.bug-report-field__label { color: var(--ink); font-weight: var(--weight-semibold); }
+.bug-report-field__required { color: var(--negative); }
+.bug-report-field .ui-input { padding: 8px 12px; border-radius: var(--radius-control); }
+.bug-report-field input { font-size: var(--text-xl); }
+.bug-report-field textarea { font-size: var(--text-body); }
+.bug-report-form__hint { margin: 0; color: var(--ink-muted); font-size: var(--text-xs); line-height: var(--leading-body); }
+.bug-report-details-toggle { align-self: flex-start; padding: 0; border: 0; color: var(--ink-secondary); background: transparent; font-size: var(--text-body); text-decoration: underline; cursor: pointer; }
+.bug-report-pdf { display: flex; flex-direction: column; gap: 4px; }
+.bug-report-pdf .ui-button { align-self: flex-start; }
+.bug-report-form__nudge, .bug-report-form__error { margin: 0; padding: 8px 12px; border-radius: var(--radius-control); font-size: var(--text-xs); }
+.bug-report-form__nudge { color: var(--warning-ink); background: var(--warning-surface); border: 1px solid var(--warning-border); }
+.bug-report-form__error { color: var(--negative-ink); background: var(--negative-surface); border: 1px solid var(--negative-border); }
+.bug-report-form__actions { display: flex; justify-content: flex-end; gap: 8px; }
+@media (min-width: 768px) {
+  .bug-report-trigger { width: var(--fab-size-md); height: var(--fab-size-md); }
+  .bug-report-dialog { overflow: hidden; }
+  .bug-report-composer__columns { grid-template-columns: minmax(0, 1fr) 360px; flex: 1; }
+  .bug-report-form { overflow-y: auto; border-top: 0; border-left: 1px solid var(--divider); }
+  .bug-report-image { min-height: 0; }
+}
+@media (max-width: 767px) {
+  .shell-floating-action { right: 12px; bottom: max(calc(var(--app-tabbar-height) + env(safe-area-inset-bottom) + 12px + var(--shell-keyboard-inset, 0px)), var(--shell-action-lift, 0px)); }
+  .bug-report-dialog { max-width: calc(100vw - 32px); }
+  .bug-report-dialog .ui-button, .bug-report-details-toggle { min-height: var(--control-touch); }
+  .bug-report-field textarea { font-size: var(--text-xl); }
+}

@@ -1,0 +1,21 @@
+.bug-pdf-chip { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--divider-strong); border-radius: var(--radius-control); background: var(--canvas); color: var(--ink-secondary); font-size: var(--text-xs); }
+.bug-pdf-chip > svg { flex-shrink: 0; width: var(--text-xl); height: var(--text-xl); }
+.bug-pdf-chip > span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bug-pdf-chip > button { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; border: 0; padding: 0; background: transparent; color: var(--ink-muted); cursor: pointer; }
+.bugs-pdf { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.bugs-pdf__download { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 6px 8px; border: 1px solid var(--divider-strong); border-radius: var(--radius-control); background: var(--surface); color: var(--ink-secondary); font-size: var(--text-xs); text-decoration: none; }
+.bugs-pdf__download > svg { flex-shrink: 0; width: var(--text-xl); height: var(--text-xl); }
+.bugs-pdf__download > span { display: flex; flex-direction: column; min-width: 0; }
+.bugs-pdf__download > span > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bugs-pdf__download:hover { background: var(--hover); }
+.bugs-pdf__removed { margin: 0; color: inherit; background: transparent; font-size: var(--text-xs); }
+.bugs-pdf__error { margin: 0; }
+.bugs-comment__bubble .bugs-pdf__download { margin-top: 4px; }
+.bugs-composer__pdf { position: relative; display: inline-flex; max-width: calc(100% - 8px); margin-bottom: 8px; }
+@media (max-width: 767px) {
+  .bug-pdf-chip > button, .bugs-pdf > .ui-button { min-width: var(--control-touch); min-height: var(--control-touch); }
+  .bugs-pdf__download { min-height: var(--control-touch); }
+}
+.bugs-pdf__download--comment { border-radius: var(--radius-control); }
+.bugs-pdf__download--own { border-color: color-mix(in srgb, var(--on-ink) 30%, transparent); background: transparent; color: inherit; }
+.bugs-pdf__download--own:hover { background: color-mix(in srgb, var(--on-ink) 10%, transparent); }

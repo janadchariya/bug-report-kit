@@ -1,0 +1,42 @@
+import { randomUUID } from 'node:crypto';
+import { eq } from 'drizzle-orm';
+import { db } from '@/src/server/db/client';
+import { bugReports, bugReportComments, bugReportStatusChanges, bugReportImages } from '@/src/server/db/schema/bugs';
+import { createLead, createUser } from '@/tests/fixtures/factories';
+import { truncateAll } from '@/tests/setup/truncate';
+import { scrubContactCopies } from '@/src/server/privacy/scrub';
+beforeEach(truncateAll);
+it('scrubs strong identifiers in bug text while preserving facts and manual image evidence', async () => {
+  const user = await createUser({ roles: ['md'] });
+  const lead = await createLead({ contact: { fullName: 'Synthetic Name', email: 'privacy@example.test' } });
+  const [report] = await db.insert(bugReports).values({ reporterUserId: user.id, requestId: randomUUID(), summary: 'Failure privacy@example.test', description: 'Contact privacy@example.test', viewportWidth: 800, viewportHeight: 600, pagePath: '/leads/privacy@example.test', pageQuery: 'privacy@example.test', userAgent: 'Browser privacy@example.test' }).returning();
+  const [comment] = await db.insert(bugReportComments).values({ bugReportId: report.id, authorUserId: user.id, requestId: randomUUID(), body: 'Reply privacy@example.test' }).returning();
+  const [history] = await db.insert(bugReportStatusChanges).values({ bugReportId: report.id, changedByUserId: user.id, fromStatus: 'new', toStatus: 'cancelled', reason: 'Duplicate privacy@example.test' }).returning();
+  const [image] = await db.insert(bugReportImages).values({ bugReportId: report.id, kind: 'screenshot', content: null, mimeType: 'image/png', width: 1, height: 1, byteCount: 3, uploadedByUserId: user.id, removedByUserId: user.id, removedAt: new Date(), removedReason: 'Review privacy@example.test' }).returning();
+  const result = await db.transaction(tx => scrubContactCopies(tx, { contactId: lead.primaryContactId!, personalTextVariants: ['Synthetic Name'], channelProbes: [{ phones: [], email: 'privacy@example.test', lineId: null }], externalRefs: [], now: new Date() }));
+  const [after] = await db.select().from(bugReports).where(eq(bugReports.id, report.id));
+  expect(after).toMatchObject({ id: report.id, reporterUserId: user.id, status: 'new', summary: 'Failure [redacted]', description: 'Contact [redacted]', userAgent: 'Browser [redacted]' });
+  expect((await db.select().from(bugReportComments).where(eq(bugReportComments.id, comment.id)))[0].body).toBe('Reply [redacted]');
+  expect((await db.select().from(bugReportStatusChanges).where(eq(bugReportStatusChanges.id, history.id)))[0]).toMatchObject({ fromStatus: 'new', toStatus: 'cancelled', reason: 'Duplicate [redacted]', changedByUserId: user.id });
+  expect((await db.select().from(bugReportImages).where(eq(bugReportImages.id, image.id)))[0]).toEqual(image);
+  expect(result.manualFollowUp).toBeGreaterThanOrEqual(1);
+});
+
+it('keeps erasure within bug text bounds even when the redaction marker expands a short identifier', async () => {
+  const user = await createUser({ roles: ['md'] });
+  const lead = await createLead({ contact: { email: 'a@b.co' } });
+  const text = (length: number) => 'a@b.co ' + 'z'.repeat(length - 7);
+  const [report] = await db.insert(bugReports).values({ reporterUserId: user.id, requestId: randomUUID(), summary: text(200), description: text(4000), pagePath: '/a@b.co', pageQuery: 'z'.repeat(2040), userAgent: text(2048), viewportWidth: 800, viewportHeight: 600 }).returning();
+  await db.insert(bugReportComments).values({ bugReportId: report.id, authorUserId: user.id, requestId: randomUUID(), body: text(4000) });
+  await db.insert(bugReportStatusChanges).values({ bugReportId: report.id, changedByUserId: user.id, fromStatus: 'new', toStatus: 'cancelled', reason: text(500) });
+  await db.transaction(tx => scrubContactCopies(tx, { contactId: lead.primaryContactId!, personalTextVariants: [], channelProbes: [{ phones: [], email: 'a@b.co', lineId: null }], externalRefs: [], now: new Date() }));
+  const [after] = await db.select().from(bugReports).where(eq(bugReports.id, report.id));
+  expect(after.summary).toHaveLength(200);
+  expect(after.summary).toContain('[redacted]');
+  expect(after.description).toHaveLength(4000);
+  expect(after.userAgent.length).toBeLessThanOrEqual(2048);
+  expect(after.pagePath.length + after.pageQuery.length + 1).toBeLessThanOrEqual(2048);
+  expect(JSON.stringify(after)).not.toContain('a@b.co');
+  expect((await db.select().from(bugReportComments))[0].body).toHaveLength(4000);
+  expect((await db.select().from(bugReportStatusChanges))[0].reason).toHaveLength(500);
+});
