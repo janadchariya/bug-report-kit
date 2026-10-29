@@ -107,7 +107,7 @@ The source loads Poppins and IBM Plex Sans Thai through `next/font/local`, which
 
 `FloatingActionLayer` owns `--shell-action-lift`, `--shell-keyboard-inset`, `--shell-action-clearance` and `--shell-action-base-clearance` at runtime. The CSS zero values are safe initialization, not hardcoded placement. Keep its measurement logic and the supplied mobile tab-bar height mapping; register host bottom bars with the reference adapter.
 
-Status mapping: blue is new; yellow is in progress; green is done; grey is cancelled. Priority mapping uses grey/blue/orange/red for low/medium/high/critical. Text and backgrounds must be mapped as pairs.
+Status mapping: blue is new; yellow is in progress; green is done; grey is cancelled. Priority mapping uses grey/yellow/orange/red for low/medium/high/critical. Text and backgrounds must be mapped as pairs.
 
 Annotation paint colours also come from host tokens. `resolveAnnotationColors` reads computed `--negative` (red, source default `#dc2626`), `--caution-dot` (yellow, `#f59e0b`) and `--positive` (green, `#15803d`) before drawing into the saved bitmap. Map these to concrete computed CSS colours and check their visibility over light and dark screenshots.
 
