@@ -1,5 +1,7 @@
 # Bug Report Kit · v2
 
+**Choose a source variant:** this root contains the Sales R19.1 kit (Drizzle/server actions). The separate [A10 kit](variants/a10/README.md) contains Supabase/REST, configurable developer assignment, Assigned to me / All reports / Reported by me and shell menu wiring. Install one variant only; their routes overlap.
+
 A portable in-app bug reporting feature: source code for an AI agent to copy into a host project. This version ports the Sales R19.1 implementation and its Almond interaction design. The host supplies its colours through CSS tokens.
 
 **Install instruction:** “Install this feature into my project. Read README.md, INTEGRATION.md, DECISIONS.md and TOKENS.md first. Preserve the shipped behaviour and adapt the documented host seams.”

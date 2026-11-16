@@ -1,5 +1,9 @@
 # Changelog
 
+## A10 variant — 2026-11-16
+
+Added [variants/a10](variants/a10/README.md) alongside the unchanged Sales implementation. Includes complete A10 bug feature layers, developer inbox/assignment, private Storage/SQL, synthetic fixtures, theme defaults, shared desktop/mobile menu wiring and explicit host contracts. Source SHA and every port deviation are in [SOURCE.md](variants/a10/SOURCE.md). Production roster is empty by default. Verification and its limits are recorded in [VERIFICATION.md](variants/a10/VERIFICATION.md).
+
 ## 2.0.0 — R19 / R19.1 port (2026-10-29)
 
 Replaces the original implementation with the R19.1 feature: server actions, Drizzle/Postgres bytea stores, private binary routes, required paste/drop/pick screenshot, annotation with rectangles/arrows/pen and undo, optional PDF, triage workspace and reporter views, read watermarks and shared badges, coachmark, illustrated guide, and optional webhook cards. The old Prisma/REST/object-storage implementation is removed.

@@ -2,6 +2,7 @@
 
 This repository is a source feature kit, not an app; there is no package.json.
 Read README.md, INTEGRATION.md, DECISIONS.md and TOKENS.md before editing or installing.
+Choose one variant: root Sales or variants/a10. For A10 read its own README, INTEGRATION, DECISIONS, SOURCE and VERIFICATION; root Sales paths/rules do not describe A10. Never overlay both variants.
 
 - Survey the host's auth, permissions, database, UI, tokens and notifications first.
 - Copy src/ contents into the host root (app/ and src/); db/ holds schema/migrations.
