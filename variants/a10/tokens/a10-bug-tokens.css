@@ -1,0 +1,28 @@
+/* Optional A10 defaults. Map these to the host theme; do not import Sales tokens. */
+:root {
+  --color-a10-border: hsl(220 9% 88%);
+  --color-a10-border-light: hsl(230 11% 92%);
+  --color-a10-brand: hsl(19 100% 50%);
+  --color-a10-brand-end: #f21436;
+  --color-a10-brand-start: #ff5300;
+  --color-a10-canvas: hsl(0 0% 100%);
+  --color-a10-empty: #959ead;
+  --color-a10-icon: #8a93a2;
+  --color-a10-icon-hover: #f3f3f5;
+  --color-a10-muted: hsl(240 5% 96%);
+  --color-a10-text: hsl(221 39% 11%);
+  --color-a10-text-secondary: hsl(215 14% 46%);
+  --color-a10-text-tertiary: hsl(218 11% 65%);
+  --color-status-client: hsl(26 90% 37%);
+  --color-status-client-bg: hsl(48 96% 89%);
+  --color-status-done: hsl(161 94% 30%);
+  --color-status-done-bg: hsl(152 57% 94%);
+  --color-status-review: hsl(229 80% 50%);
+  --color-status-review-bg: hsl(229 100% 96%);
+  --color-status-todo: hsl(220 9% 46%);
+  --color-status-todo-bg: hsl(240 5% 96%);
+  --font-sans: var(--font-poppins, system-ui), var(--font-plex-thai, sans-serif), system-ui, sans-serif;
+  --gradient-a10-cta: linear-gradient(90deg, #ff5300, #f21436);
+  --shadow-a10-cta: 0 3px 7px #ff530026;
+  --shadow-a10-dropdown: 0 20px 60px -14px rgb(17 24 39 / 0.16), 0 6px 16px -8px rgb(17 24 39 / 0.08);
+}

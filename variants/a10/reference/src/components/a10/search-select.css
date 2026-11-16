@@ -1,0 +1,93 @@
+/* The list a SearchSelect opens in place of the browser's own select menu. Above dialogs (z-index 120). */
+.a10-search-select {
+  z-index: 130;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: max(200px, var(--radix-popover-trigger-width));
+  max-width: min(420px, calc(100vw - 24px));
+  max-height: min(360px, var(--radix-popover-content-available-height));
+  padding: 6px;
+  border: 1px solid var(--color-a10-border-light);
+  border-radius: 10px;
+  background: var(--color-a10-canvas);
+  box-shadow: 0 12px 32px rgb(21 36 59 / 14%);
+  color: var(--color-a10-text);
+  font: 400 12px var(--font-sans);
+}
+
+.a10-search-select-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--color-a10-border);
+  border-radius: 7px;
+  color: var(--color-a10-text-tertiary);
+}
+
+.a10-search-select-search:focus-within {
+  border-color: var(--color-a10-brand);
+}
+
+.a10-search-select-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-a10-text);
+  font: inherit;
+}
+
+.a10-search-select-list {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.a10-search-select-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 8px 0 4px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.a10-search-select-option[data-active] {
+  background: var(--color-a10-muted);
+}
+
+.a10-search-select-option[aria-selected="true"] {
+  font-weight: 500;
+}
+
+.a10-search-select-option[aria-disabled="true"] {
+  color: var(--color-a10-text-tertiary);
+  cursor: default;
+}
+
+.a10-search-select-tick {
+  display: inline-flex;
+  flex: none;
+  width: 14px;
+  color: var(--color-a10-brand);
+}
+
+.a10-search-select-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a10-search-select-none {
+  padding: 8px;
+  color: var(--color-a10-text-secondary);
+}
